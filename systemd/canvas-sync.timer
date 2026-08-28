@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Canvas sync daily
+
+[Timer]
+OnCalendar=*-*-* 07:00:00
+Persistent=true
+Unit=canvas-sync.service
+
+[Install]
+WantedBy=timers.target

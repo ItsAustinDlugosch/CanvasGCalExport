@@ -1,0 +1,8 @@
+{
+  "canvas_ical_url": "https://canvas.example.edu/feeds/calendars/user_your_private_feed.ics",
+  "excluded_courses": [],
+  "active_calendar_title": "Canvas Assignments",
+  "completed_calendar_title": "Canvas Completed",
+  "local_timezone": "America/Chicago",
+  "event_duration_minutes": 15
+}

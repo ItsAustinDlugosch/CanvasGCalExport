@@ -1,0 +1,7 @@
+credentials.json
+config.json
+token.*
+*.log
+canvas.ics
+__pycache__/
+.venv/

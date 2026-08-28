@@ -1,0 +1,6 @@
+[Unit]
+Description=Sync Canvas assignments to Google Calendar
+
+[Service]
+Type=oneshot
+ExecStart=/home/glitc/Projects/canvasExport/run_canvas_sync.sh
