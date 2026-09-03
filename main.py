@@ -63,11 +63,12 @@ EVENT_DURATION_MINUTES = int(CONFIG["event_duration_minutes"])
 # Google API scopes
 CALENDAR_SCOPES = [
     "https://www.googleapis.com/auth/calendar.app.created",
+    "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
 ]
 
 # OAuth client secrets downloaded from Google Cloud console:
 # APIs & Services -> Credentials -> OAuth client ID (Desktop) -> download JSON
-CLIENT_SECRET_FILE = CLIENT_SECRET_FILE = str(BASE_DIR / "credentials.json")
+CLIENT_SECRET_FILE = str(BASE_DIR / "credentials.json")
 
 # token cache
 CALENDAR_TOKEN_FILE = str(BASE_DIR / "token.json")
@@ -126,9 +127,12 @@ def get_google_service(api_name: str, api_version: str, scopes: list[str], token
     creds = None
     if os.path.exists(token_file):
         if json_token:
-            creds = Credentials.from_authorized_user_file(token_file, scopes)
+            creds = Credentials.from_authorized_user_file(token_file)
 
     if creds and not creds.has_scopes(scopes):
+        logging.warning(
+            "Cached Google token is missing required scope(s); reauthorization is required."
+        )
         creds = None
 
     if not creds or not creds.valid:
@@ -139,8 +143,15 @@ def get_google_service(api_name: str, api_version: str, scopes: list[str], token
                 creds = None
 
         if not creds:
+            if not os.isatty(0):
+                raise RuntimeError(
+                    "Google Calendar reauthorization is required. Run "
+                    f"{BASE_DIR / '.venv' / 'bin' / 'python3'} {BASE_DIR / 'main.py'} "
+                    "from an interactive terminal, approve the requested scopes, then retry the scheduled sync."
+                )
             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, scopes)
-            creds = flow.run_local_server(port=0)
+            open_browser = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+            creds = flow.run_local_server(port=0, open_browser=open_browser)
 
         with open(token_file, "w") as f:
             f.write(creds.to_json())

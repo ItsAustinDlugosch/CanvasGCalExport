@@ -37,13 +37,14 @@ Each assignment becomes a short event whose end time is the Canvas due time. Dat
 6. Download the client JSON.
 7. Save it in this repository as `credentials.json`.
 
-The app requests this Calendar scope:
+The app requests these Calendar scopes:
 
 ```text
 https://www.googleapis.com/auth/calendar.app.created
+https://www.googleapis.com/auth/calendar.calendarlist.readonly
 ```
 
-That scope allows the app to create secondary calendars and manage events on calendars it created.
+These scopes allow the app to create secondary calendars, manage events on calendars it created, and find the Canvas calendars in your calendar list.
 
 ## Canvas Setup
 
@@ -196,7 +197,7 @@ systemctl --user list-timers --all
 Common issues:
 
 - `credentials.json` missing: download a Desktop OAuth client JSON from Google Cloud Console.
-- OAuth opens a browser URL: approve access in the browser and return to the terminal.
+- OAuth opens a browser or prints an approval URL: approve access and return to the terminal.
 - Laptop asleep at run time: use the `systemd` timer, not cron.
-- Calendar permissions error: delete `token.json` and re-run `main.py` to re-authorize.
+- Calendar permissions error: re-run `main.py` from an interactive terminal to re-authorize. If Google still reuses the old grant, delete `token.json` and run `main.py` again.
 - Canvas fetch fails: confirm the Canvas feed URL in `config.json`.
