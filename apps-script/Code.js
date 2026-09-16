@@ -5,13 +5,14 @@ const DEFAULTS = {
   taskListTitle: 'Canvas Assignments',
   timeZone: 'America/Chicago',
   durationMinutes: 15,
+  excludedCourses: ['CSCE-221'],
 };
 
 function readConfig() {
   const props = PropertiesService.getScriptProperties();
   const icalUrl = props.getProperty('CANVAS_ICAL_URL');
   if (!icalUrl) throw new Error('Set CANVAS_ICAL_URL in Script Properties.');
-  const excludedCourses = JSON.parse(props.getProperty('EXCLUDED_COURSES') || '[]');
+  const excludedCourses = JSON.parse(props.getProperty('EXCLUDED_COURSES') || JSON.stringify(DEFAULTS.excludedCourses));
   if (!Array.isArray(excludedCourses)) throw new Error('EXCLUDED_COURSES must be a JSON array.');
   const durationMinutes = Number(props.getProperty('EVENT_DURATION_MINUTES') || DEFAULTS.durationMinutes);
   if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {

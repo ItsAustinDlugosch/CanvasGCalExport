@@ -109,9 +109,9 @@ test('preview reports changes without creating calendars or Tasks', () => {
     },
   });
   const report = app.previewSync();
-  assert.equal(report.assignments, 3);
-  assert.equal(report.createEvents, 3);
-  assert.equal(report.createTasks, 3);
+  assert.equal(report.assignments, 2);
+  assert.equal(report.createEvents, 2);
+  assert.equal(report.createTasks, 2);
 });
 
 test('first sync preserves completed events and creates matching completed Tasks', () => {
