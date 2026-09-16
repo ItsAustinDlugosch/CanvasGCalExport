@@ -1,4 +1,7 @@
 import os
+import importlib.util
+from pathlib import Path
+import tempfile
 import unittest
 from datetime import datetime, timezone
 from types import SimpleNamespace
@@ -6,8 +9,13 @@ from unittest.mock import MagicMock, call, patch
 
 from icalendar import Calendar, Event
 
-os.environ.setdefault("CANVAS_ICAL_URL", "https://canvas.example.invalid/feed.ics")
-import main
+# Load the relocated entry point without reading personal configuration or logs.
+spec = importlib.util.spec_from_file_location("canvas_local", Path(__file__).resolve().parents[1] / "local" / "main.py")
+main = importlib.util.module_from_spec(spec)
+with tempfile.TemporaryDirectory() as directory, patch.dict(
+    os.environ, {"CANVAS_ICAL_URL": "https://canvas.example.invalid/feed.ics"}
+), patch.object(Path, "resolve", return_value=Path(directory) / "main.py"), patch("logging.basicConfig"):
+    spec.loader.exec_module(main)
 
 
 class SyncTests(unittest.TestCase):

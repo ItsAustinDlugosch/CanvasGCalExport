@@ -5,3 +5,7 @@ token.*
 canvas.ics
 __pycache__/
 .venv/
+node_modules/
+.clasp.json
+.clasprc.json
+.apps-script-settings.json
