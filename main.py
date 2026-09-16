@@ -110,10 +110,14 @@ def fetch_canvas_assignments(ical_url: str):
 
         dtstart = component.get("dtstart").dt  # due time for assignment items
 
-        # Canvas appends a course tag such as "[CSCE-312:500]" to assignment titles.
-        course_tag = re.search(r"\s*\[([^:\[\]]+):[^\]]+\]\s*$", summary)
+        # Canvas course tags can be "[CSCE-312:500]" or "[CSCE 421 500:]".
+        course_tag = re.search(r"\s*\[([^:\[\]]+):[^\]]*\]\s*$", summary)
         if course_tag:
-            title_clean = f"{course_tag.group(1).strip()} - {summary[:course_tag.start()].strip()}"
+            course = course_tag.group(1).strip()
+            course_with_section = re.fullmatch(r"([A-Za-z]+)\s+(\d+[A-Za-z]?)\s+\d+", course)
+            if course_with_section:
+                course = f"{course_with_section.group(1).upper()}-{course_with_section.group(2)}"
+            title_clean = f"{course} - {summary[:course_tag.start()].strip()}"
         else:
             title_clean = re.sub(r"\s*\[[^\]]+\]\s*$", "", summary).strip()
 

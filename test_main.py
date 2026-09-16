@@ -16,6 +16,7 @@ class SyncTests(unittest.TestCase):
         for uid, summary in (
             ("event-assignment-1", "Homework 1 [CSCE-421:500]"),
             ("event-assignment-2", "Homework 2 [CSCE-221:500]"),
+            ("event-assignment-3218702", "HW1 [CSCE 421 500:]"),
         ):
             event = Event()
             event.add("uid", uid)
@@ -29,7 +30,10 @@ class SyncTests(unittest.TestCase):
         ):
             assignments, feed_keys = main.fetch_canvas_assignments("https://canvas.example.invalid/feed.ics")
 
-        self.assertEqual([item["title"] for item in assignments], ["CSCE-421 - Homework 1"])
+        self.assertEqual(
+            [item["title"] for item in assignments],
+            ["CSCE-421 - Homework 1", "CSCE-421 - HW1"],
+        )
         self.assertIn("uid:event-assignment-2", feed_keys)
         response.raise_for_status.assert_called_once_with()
 
