@@ -12,6 +12,7 @@ function contextWith(overrides = {}) {
     Set,
     Map,
     console: { log() {} },
+    Session: { getScriptTimeZone: () => 'America/Chicago' },
     Utilities: {
       sleep() {},
       parseDate(value, zone) {
@@ -77,6 +78,18 @@ test('rejects malformed and empty feeds before sync', () => {
   assert.throws(() => app.readAssignments('BEGIN:VCALENDAR\nEND:VCALENDAR', config), /no calendar events/);
 });
 
+test('Script Properties override the generic course exclusion default', () => {
+  const app = contextWith({
+    PropertiesService: { getScriptProperties: () => ({ getProperty: key => ({
+      CANVAS_ICAL_URL: 'https://example.invalid/feed.ics',
+      EXCLUDED_COURSES: '["CSCE-221"]',
+    })[key] || null }) },
+  });
+  const config = app.readConfig();
+  assert.equal(config.excludedCourses.has('CSCE-221'), true);
+  assert.equal(config.timeZone, 'America/Chicago');
+});
+
 test('a failed Canvas fetch stops before any Google changes', () => {
   let calendarCalled = false;
   const app = contextWith({
@@ -109,9 +122,9 @@ test('preview reports changes without creating calendars or Tasks', () => {
     },
   });
   const report = app.previewSync();
-  assert.equal(report.assignments, 2);
-  assert.equal(report.createEvents, 2);
-  assert.equal(report.createTasks, 2);
+  assert.equal(report.assignments, 3);
+  assert.equal(report.createEvents, 3);
+  assert.equal(report.createTasks, 3);
 });
 
 test('first sync preserves completed events and creates matching completed Tasks', () => {

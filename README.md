@@ -1,8 +1,14 @@
 # Canvas Export
 
-Sync Canvas assignment deadlines into Google Calendar as timed events.
+Sync Canvas assignment deadlines into Google Calendar and Google Tasks.
 
-For the cloud-hosted Google Apps Script migration, see [Apps Script migration](APPS_SCRIPT_MIGRATION.md).
+## Start here: cloud setup
+
+For a new installation, follow the [step-by-step Google Apps Script setup](APPS_SCRIPT_MIGRATION.md). It covers installing the local tools, finding the Canvas feed URL, creating the cloud script, checking the first sync, and scheduling daily runs. Python and a Google Cloud project are not required for this setup.
+
+## Legacy Python version
+
+The instructions below describe the older Linux/Python version. Use them only if you specifically want to run the sync on your own computer.
 
 Canvas Export reads your private Canvas calendar feed and mirrors assignment deadlines into two Google Calendars:
 

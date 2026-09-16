@@ -3,9 +3,8 @@ const DEFAULTS = {
   activeCalendarTitle: 'Canvas Assignments',
   completedCalendarTitle: 'Canvas Completed',
   taskListTitle: 'Canvas Assignments',
-  timeZone: 'America/Chicago',
   durationMinutes: 15,
-  excludedCourses: ['CSCE-221'],
+  excludedCourses: [],
 };
 
 function readConfig() {
@@ -24,7 +23,7 @@ function readConfig() {
     activeCalendarTitle: props.getProperty('ACTIVE_CALENDAR_TITLE') || DEFAULTS.activeCalendarTitle,
     completedCalendarTitle: props.getProperty('COMPLETED_CALENDAR_TITLE') || DEFAULTS.completedCalendarTitle,
     taskListTitle: props.getProperty('TASK_LIST_TITLE') || DEFAULTS.taskListTitle,
-    timeZone: props.getProperty('LOCAL_TIMEZONE') || DEFAULTS.timeZone,
+    timeZone: props.getProperty('LOCAL_TIMEZONE') || Session.getScriptTimeZone(),
     durationMinutes,
   };
 }

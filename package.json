@@ -2,7 +2,8 @@
   "private": true,
   "scripts": {
     "test:apps-script": "node tests/apps-script.test.js",
-    "clasp": "clasp"
+    "clasp": "clasp",
+    "deploy:apps-script": "node scripts/deploy_apps_script.mjs"
   },
   "devDependencies": {
     "@google/clasp": "^3.4.1",
