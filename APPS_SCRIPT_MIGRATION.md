@@ -23,7 +23,7 @@ Google Tasks stores only the scheduled date through its API. The calendar event 
    npm run clasp -- login --no-localhost
    ```
 
-   The login opens a Google authorization page. Complete it in your browser. No Canvas API token is required.
+   The login prints a Google authorization URL and waits for a URL to be pasted into the terminal. Open the authorization URL in your browser and approve access. Google then redirects to `localhost:8888`; because `--no-localhost` does not run a local server, the browser will say it cannot connect. Copy the **entire URL from the browser address bar** (including `code` and `state` parameters) and paste it into the waiting terminal prompt. The CLI validates the URL and finishes login. Keep that URL private; it contains a temporary authorization code. No Canvas API token is required.
 3. Create the standalone cloud project and push the code:
 
    ```bash
