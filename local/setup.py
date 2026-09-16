@@ -75,36 +75,15 @@ def create_venv(skip_deps: bool):
 def install_systemd_timer():
     SYSTEMD_USER_DIR.mkdir(parents=True, exist_ok=True)
 
-    SERVICE_FILE.write_text(
-        "\n".join(
-            [
-                "[Unit]",
-                "Description=Sync Canvas assignments to Google Calendar",
-                "",
-                "[Service]",
-                "Type=oneshot",
-                f"ExecStart={RUN_SCRIPT}",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
+    templates = PROJECT_DIR / "systemd"
+    # systemd expands % specifiers and $ environment references in ExecStart.
+    # Quote the executable so checkout paths containing spaces also work.
+    executable = str(RUN_SCRIPT).replace("%", "%%").replace("$", "$$")
+    executable = executable.replace("\\", "\\\\").replace('"', '\\"')
+    service = (templates / "canvas-sync.service.in").read_text(encoding="utf-8")
+    SERVICE_FILE.write_text(service.replace("@RUN_SCRIPT@", f'"{executable}"'), encoding="utf-8")
     TIMER_FILE.write_text(
-        "\n".join(
-            [
-                "[Unit]",
-                "Description=Run Canvas sync daily",
-                "",
-                "[Timer]",
-                "OnCalendar=*-*-* 07:00:00",
-                "Persistent=true",
-                "Unit=canvas-sync.service",
-                "",
-                "[Install]",
-                "WantedBy=timers.target",
-                "",
-            ]
-        ),
+        (templates / "canvas-sync.timer").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
 

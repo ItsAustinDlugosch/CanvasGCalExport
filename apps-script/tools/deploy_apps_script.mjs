@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const manifestPath = join(root, 'apps-script', 'appsscript.json');
 const codePath = join(root, 'apps-script', 'Code.js');
 const claspPath = join(root, '.clasp.json');
