@@ -13,6 +13,7 @@ function contextWith(overrides = {}) {
     Map,
     console: { log() {} },
     Utilities: {
+      sleep() {},
       parseDate(value, zone) {
         const match = value.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/);
         const [, year, month, day, hour, minute, second] = match.map(Number);
@@ -196,4 +197,21 @@ test('completed Tasks move events and deleted assignments clean up both surfaces
   assert.ok(operations.some(op => op.join('|') === 'event.remove|active|stale-event'));
   assert.ok(operations.some(op => op.join('|') === 'task.remove|tasks|stale-task'));
   assert.ok(!operations.some(op => op.join('|') === 'task.remove|tasks|completed-task'));
+});
+
+test('Task writes retry quota errors but stop on unrelated failures', () => {
+  const delays = [];
+  const app = contextWith({ Utilities: { sleep: delay => delays.push(delay) } });
+  const writeTask = app.taskWriter();
+  let attempts = 0;
+  const result = writeTask(() => {
+    attempts++;
+    if (attempts < 3) throw new Error('GoogleJsonResponseException: Quota Exceeded');
+    return 'created';
+  });
+  assert.equal(result, 'created');
+  assert.equal(attempts, 3);
+  assert.ok(delays.some(delay => delay >= 1000));
+
+  assert.throws(() => writeTask(() => { throw new Error('Bad request'); }), /Bad request/);
 });

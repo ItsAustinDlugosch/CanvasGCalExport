@@ -53,4 +53,4 @@ Google Tasks stores only the scheduled date through its API. The calendar event 
 
 Run the local tests with `npm run test:apps-script`. `npm run clasp -- push --force` updates the linked cloud project after editing the script. Apps Script runs are limited to six minutes, so the code paginates Google results and skips events/tasks that are already current. Task completion is checked at the next daily run; Google Tasks has no direct completion trigger. A manually deleted Task will be recreated if its Canvas assignment still exists.
 
-The Python implementation remains available until the cloud script is verified. Do not disable the local timer before the first cloud sync succeeds.
+The Python implementation remains available until the cloud script is verified. Do not disable the local timer before the first cloud sync succeeds. The initial Google Tasks import can hit a short-term API quota. Task writes are spaced and retried; if a run still stops, wait and run `previewSync` again to see the remaining work, then rerun `syncCanvas`. Already-created Tasks are found by their Canvas keys and are not duplicated.

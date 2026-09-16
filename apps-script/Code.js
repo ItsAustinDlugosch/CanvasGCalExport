@@ -270,6 +270,25 @@ function taskBody(assignment, config, completed) {
   return body;
 }
 
+function taskWriter() {
+  let lastAttempt = 0;
+  return operation => {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const spacing = lastAttempt + 1000 - Date.now();
+      if (spacing > 0) Utilities.sleep(spacing);
+      lastAttempt = Date.now();
+      try {
+        return operation();
+      } catch (error) {
+        if (!/Quota Exceeded|Rate Limit Exceeded|Too Many Requests/i.test(String(error)) || attempt === 4) {
+          throw error;
+        }
+        Utilities.sleep(1000 * 2 ** attempt + Math.floor(Math.random() * 1000));
+      }
+    }
+  };
+}
+
 function installDailyTrigger() {
   const name = 'syncCanvas';
   if (ScriptApp.getProjectTriggers().some(trigger => trigger.getHandlerFunction() === name)) return;
@@ -333,6 +352,7 @@ function syncCanvas() {
     const taskListId = findTaskList(config.taskListTitle);
     const events = listCalendarEvents(calendarIds);
     const tasks = listTasks(taskListId);
+    const writeTask = taskWriter();
     const counts = { createdEvents: 0, movedEvents: 0, updatedEvents: 0, createdTasks: 0,
       updatedTasks: 0, deletedEvents: 0, deletedTasks: 0 };
 
@@ -341,9 +361,9 @@ function syncCanvas() {
       let taskEntry = matchingEntry(tasks.byKey, assignment);
       if (!taskEntry) {
         const completed = !!eventEntry && eventEntry.status === 'completed';
-        let task = Tasks.Tasks.insert(taskBody(assignment, config, completed), taskListId);
+        let task = writeTask(() => Tasks.Tasks.insert(taskBody(assignment, config, completed), taskListId));
         if (completed && task.status !== 'completed') {
-          task = Tasks.Tasks.patch({ status: 'completed', completed: new Date().toISOString() }, taskListId, task.id);
+          task = writeTask(() => Tasks.Tasks.patch({ status: 'completed', completed: new Date().toISOString() }, taskListId, task.id));
           if (task.status !== 'completed') throw new Error(`Could not preserve completed state for task ${task.id}.`);
         }
         taskEntry = { task };
@@ -354,7 +374,7 @@ function syncCanvas() {
         const desiredTask = taskBody(assignment, config, false);
         const task = taskEntry.task;
         if (task.title !== desiredTask.title || (task.due || '').slice(0, 10) !== assignment.due.day) {
-          Tasks.Tasks.patch({ title: desiredTask.title, due: desiredTask.due }, taskListId, task.id);
+          writeTask(() => Tasks.Tasks.patch({ title: desiredTask.title, due: desiredTask.due }, taskListId, task.id));
           counts.updatedTasks++;
         }
       }
@@ -392,7 +412,7 @@ function syncCanvas() {
     }
     for (const entry of tasks.managed) {
       if ([...entry.keys].every(key => !feedKeys.has(key))) {
-        Tasks.Tasks.remove(taskListId, entry.task.id);
+        writeTask(() => Tasks.Tasks.remove(taskListId, entry.task.id));
         counts.deletedTasks++;
       }
     }
