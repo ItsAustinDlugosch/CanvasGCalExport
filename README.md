@@ -18,6 +18,7 @@ Each assignment becomes a short event whose end time is the Canvas due time. Dat
 - Tracks synced events with Canvas UID/key metadata to avoid duplicates
 - Lets you mark assignments complete by moving events to `Canvas Completed`
 - Keeps completed events in the completed calendar during future syncs
+- Deletes synced events from either calendar when their assignment disappears from the Canvas feed
 - Supports laptop-friendly scheduling with a `systemd` user timer
 
 ## Requirements

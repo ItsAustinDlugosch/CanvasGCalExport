@@ -11,7 +11,7 @@ from google.auth.transport.requests import Request
 from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 import os
-from datetime import datetime, date, time, timedelta, timezone
+from datetime import datetime, date, time, timedelta
 from zoneinfo import ZoneInfo
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -84,10 +84,13 @@ logging.basicConfig(
 # CANVAS: fetch + parse + filter
 # --------------------------
 def fetch_canvas_assignments(ical_url: str):
-    raw = requests.get(ical_url, timeout=30).text
+    response = requests.get(ical_url, timeout=30)
+    response.raise_for_status()
+    raw = response.text
     cal = Calendar.from_ical(raw)
 
     assignments = []
+    feed_keys = set()
     exclude_pattern = re.compile(r"\[(?:%s):" % "|".join(map(re.escape, EXCLUDED_COURSES))) if EXCLUDED_COURSES else None
 
     for component in cal.walk("VEVENT"):
@@ -98,13 +101,14 @@ def fetch_canvas_assignments(ical_url: str):
             continue
 
         summary = str(component.get("summary", "")).strip()
+        url = str(component.get("url", "")) if component.get("url") else ""
+        feed_keys.update((canvas_key(uid, url), f"uid:{uid}"))
 
         # Exclude course(s) by bracket tag like "[CSCE-221:..."
         if exclude_pattern and exclude_pattern.search(summary):
             continue
 
         dtstart = component.get("dtstart").dt  # due time for assignment items
-        url = str(component.get("url", "")) if component.get("url") else ""
 
         # Canvas appends a course tag such as "[CSCE-312:500]" to assignment titles.
         course_tag = re.search(r"\s*\[([^:\[\]]+):[^\]]+\]\s*$", summary)
@@ -120,7 +124,7 @@ def fetch_canvas_assignments(ical_url: str):
             "url": url,
         })
 
-    return assignments
+    return assignments, feed_keys
 
 
 # --------------------------
@@ -302,22 +306,27 @@ def find_or_create_calendar_id(service, title: str) -> str:
     logging.info("Created Google Calendar: title=%r id=%s", title, created["id"])
     return created["id"]
 
-def get_existing_calendar_events(service, calendar_ids: dict[str, str], assignments: list[dict]) -> dict[str, dict]:
-    if assignments:
-        starts = []
-        ends = []
-        for assignment in assignments:
-            start, end = assignment_event_window(assignment["due"])
-            starts.append(start)
-            ends.append(end)
-        time_min = (min(starts) - timedelta(days=1)).astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-        time_max = (max(ends) + timedelta(days=1)).astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-    else:
-        now = datetime.now(tz=timezone.utc)
-        time_min = (now - timedelta(days=365)).isoformat().replace("+00:00", "Z")
-        time_max = (now + timedelta(days=365)).isoformat().replace("+00:00", "Z")
+def canvas_event_keys(event: dict) -> set[str]:
+    private = event.get("extendedProperties", {}).get("private", {})
+    keys = set()
+    if private.get("CanvasKey"):
+        keys.add(private["CanvasKey"])
+    if private.get("CanvasUID"):
+        keys.add(f"uid:{private['CanvasUID']}")
 
+    description = event.get("description", "") or ""
+    key_match = re.search(r"^CanvasKey=(.+)$", description, re.MULTILINE)
+    if key_match:
+        keys.add(key_match.group(1).strip())
+    uid_match = re.search(r"^Canvas UID:\s*(.+)$", description, re.MULTILINE)
+    if uid_match:
+        keys.add(f"uid:{uid_match.group(1).strip()}")
+    return keys
+
+
+def get_existing_calendar_events(service, calendar_ids: dict[str, str]) -> tuple[dict[str, dict], list[dict]]:
     existing = {}
+    managed_events = []
     for status, calendar_id in calendar_ids.items():
         page_token = None
         while True:
@@ -325,27 +334,14 @@ def get_existing_calendar_events(service, calendar_ids: dict[str, str], assignme
                 calendarId=calendar_id,
                 maxResults=2500,
                 pageToken=page_token,
-                singleEvents=True,
+                singleEvents=False,
                 showDeleted=False,
-                timeMin=time_min,
-                timeMax=time_max,
             ).execute()
             for event in resp.get("items", []):
-                private = event.get("extendedProperties", {}).get("private", {})
-                keys = [private.get("CanvasKey")]
-                uid = private.get("CanvasUID")
-                if uid:
-                    keys.append(f"uid:{uid}")
-
-                description = event.get("description", "") or ""
-                key_match = re.search(r"^CanvasKey=(.+)$", description, re.MULTILINE)
-                if key_match:
-                    keys.append(key_match.group(1).strip())
-                uid_match = re.search(r"^Canvas UID:\s*(.+)$", description, re.MULTILINE)
-                if uid_match:
-                    keys.append(f"uid:{uid_match.group(1).strip()}")
-
-                for key in filter(None, keys):
+                keys = canvas_event_keys(event)
+                if keys:
+                    managed_events.append({"calendar_id": calendar_id, "event": event, "keys": keys})
+                for key in keys:
                     existing[key] = {
                         "calendar_id": calendar_id,
                         "status": status,
@@ -354,7 +350,7 @@ def get_existing_calendar_events(service, calendar_ids: dict[str, str], assignme
             page_token = resp.get("nextPageToken")
             if not page_token:
                 break
-    return existing
+    return existing, managed_events
 
 def upsert_assignment_event(service, calendar_id: str, existing_event: dict | None, assignment: dict) -> str:
     desired = assignment_event_body(assignment)
@@ -373,7 +369,7 @@ def upsert_assignment_event(service, calendar_id: str, existing_event: dict | No
     return "updated"
 
 def main():
-    assignments = fetch_canvas_assignments(ICAL_URL)
+    assignments, feed_keys = fetch_canvas_assignments(ICAL_URL)
     logging.info(
         "Canvas assignment events after filtering: %d",
         len(assignments),
@@ -384,8 +380,8 @@ def main():
         "active": find_or_create_calendar_id(service, ACTIVE_CALENDAR_TITLE),
         "completed": find_or_create_calendar_id(service, COMPLETED_CALENDAR_TITLE),
     }
-    existing_events = get_existing_calendar_events(service, calendar_ids, assignments)
-    existing_event_count = len({entry["event"]["id"] for entry in existing_events.values()})
+    existing_events, managed_events = get_existing_calendar_events(service, calendar_ids)
+    existing_event_count = len(managed_events)
     logging.info("Sample existing Canvas calendar identifier(s): %s", list(existing_events)[:5])
     logging.info("Sample new UID(s): %s", [a["uid"] for a in assignments[:5]])
     logging.info("Sample new URL(s): %s", [a["url"] for a in assignments[:5]])
@@ -425,12 +421,22 @@ def main():
         else:
             skipped += 1
 
+    deleted = 0
+    for entry in managed_events:
+        if entry["keys"].isdisjoint(feed_keys):
+            service.events().delete(
+                calendarId=entry["calendar_id"],
+                eventId=entry["event"]["id"],
+            ).execute()
+            deleted += 1
+
     logging.info(
-        "Created %d calendar events, updated %d active events, updated %d completed events, skipped %d already-current.",
+        "Created %d calendar events, updated %d active events, updated %d completed events, skipped %d already-current, deleted %d removed assignments.",
         created,
         updated,
         completed_updated,
         skipped,
+        deleted,
     )
 
 
