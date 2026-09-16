@@ -12,6 +12,7 @@ Each assignment becomes a short event whose end time is the Canvas due time. Dat
 ## Features
 
 - Creates timed Google Calendar events from Canvas assignment feed entries
+- Prefixes assignment titles with their Canvas course code (for example, `CSCE-421 - Homework 1`)
 - Preserves Canvas due times using your configured local timezone
 - Converts Canvas calendar links into direct assignment links when possible
 - Tracks synced events with Canvas UID/key metadata to avoid duplicates

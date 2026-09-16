@@ -106,9 +106,12 @@ def fetch_canvas_assignments(ical_url: str):
         dtstart = component.get("dtstart").dt  # due time for assignment items
         url = str(component.get("url", "")) if component.get("url") else ""
 
-        # Optional: strip the trailing bracketed course tag from the task title
-        # e.g., "Homework 1 [CSCE-312:500]" -> "Homework 1"
-        title_clean = re.sub(r"\s*\[[^\]]+\]\s*$", "", summary).strip()
+        # Canvas appends a course tag such as "[CSCE-312:500]" to assignment titles.
+        course_tag = re.search(r"\s*\[([^:\[\]]+):[^\]]+\]\s*$", summary)
+        if course_tag:
+            title_clean = f"{course_tag.group(1).strip()} - {summary[:course_tag.start()].strip()}"
+        else:
+            title_clean = re.sub(r"\s*\[[^\]]+\]\s*$", "", summary).strip()
 
         assignments.append({
             "uid": uid,
