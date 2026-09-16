@@ -2,6 +2,8 @@
 
 Sync Canvas assignment deadlines into Google Calendar as timed events.
 
+For the cloud-hosted Google Apps Script migration, see [Apps Script migration](APPS_SCRIPT_MIGRATION.md).
+
 Canvas Export reads your private Canvas calendar feed and mirrors assignment deadlines into two Google Calendars:
 
 - `Canvas Assignments` for active assignments

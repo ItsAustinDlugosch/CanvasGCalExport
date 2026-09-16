@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "test:apps-script": "node tests/apps-script.test.js",
+    "clasp": "clasp"
+  },
+  "devDependencies": {
+    "@google/clasp": "^3.4.1",
+    "node": "^22.23.2"
+  }
+}
