@@ -8,6 +8,7 @@ Canvas Export has two independent implementations. Start with the [main README](
 apps-script/
   README.md               Browser setup guide
   Code.js                 Cloud sync and trigger entry points
+  WebApp.html             Manual browser-sync page
   appsscript.json          Google services and permissions
   tools/                  Optional command-line upload helpers
 local/
@@ -95,7 +96,7 @@ Also create `.apps-script-settings.json` at the root with your project's time zo
 }
 ```
 
-Uploads overwrite the linked project's code, so keep any intentional editor changes in your local source first. `.claspignore` limits uploads to `Code.js` and `appsscript.json`. The helper temporarily applies your local time-zone setting and restores the tracked files afterward. Keep both private settings files when moving to another computer; without the project link, the helper creates a second cloud project.
+Uploads overwrite the linked project's code, so keep any intentional editor changes in your local source first. `.claspignore` limits uploads to `Code.js`, `WebApp.html`, and `appsscript.json`. The helper temporarily applies your local time-zone setting and restores the tracked files afterward. Keep both private settings files when moving to another computer; without the project link, the helper creates a second cloud project.
 
 ## Implementation notes
 

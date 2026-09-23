@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f6f8; color: #202124; }
+      main { width: min(34rem, calc(100% - 2rem)); box-sizing: border-box; padding: 2rem; border-radius: 1rem; background: white; box-shadow: 0 0.5rem 2rem #0002; }
+      h1 { margin-top: 0; font-size: 1.5rem; }
+      p { line-height: 1.5; }
+      button { border: 0; border-radius: 0.5rem; padding: 0.8rem 1.1rem; background: #1a73e8; color: white; font: inherit; font-weight: 600; cursor: pointer; }
+      button:disabled { opacity: 0.6; cursor: wait; }
+      #status { min-height: 3rem; margin-top: 1rem; white-space: pre-wrap; }
+      .error { color: #b3261e; }
+      @media (prefers-color-scheme: dark) {
+        body { background: #202124; color: #e8eaed; }
+        main { background: #303134; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Canvas Assignment Sync</h1>
+      <p>Fetch the latest Canvas assignments and apply Google Task completion changes to your calendars.</p>
+      <button id="run" type="button">Run sync now</button>
+      <div id="status" role="status" aria-live="polite"></div>
+    </main>
+    <script>
+      const button = document.getElementById('run');
+      const status = document.getElementById('status');
+
+      button.addEventListener('click', () => {
+        button.disabled = true;
+        status.className = '';
+        status.textContent = 'Syncing… Keep this page open.';
+        google.script.run
+          .withSuccessHandler(result => {
+            button.disabled = false;
+            if (result && result.skipped) {
+              status.textContent = result.reason;
+              return;
+            }
+            const labels = {
+              createdEvents: 'Events created', movedEvents: 'Events moved',
+              updatedEvents: 'Events updated', createdTasks: 'Tasks created',
+              updatedTasks: 'Tasks updated', deletedEvents: 'Events deleted',
+              deletedTasks: 'Tasks deleted',
+            };
+            status.textContent = 'Sync complete.\n' + Object.entries(labels)
+              .map(([key, label]) => `${label}: ${result[key] || 0}`).join('\n');
+          })
+          .withFailureHandler(error => {
+            button.disabled = false;
+            status.className = 'error';
+            status.textContent = `Sync failed: ${error.message || error}`;
+          })
+          .syncCanvas();
+      });
+    </script>
+  </body>
+</html>

@@ -6,7 +6,7 @@ Use the instructions for the setup you already have. You do not need to switch b
 
 ## Google Apps Script installed in the browser
 
-Open your existing project from [Apps Script](https://script.google.com/). Replace **Code.gs** with the latest [Code.js](../apps-script/Code.js) and **appsscript.json** with the latest [manifest](../apps-script/appsscript.json), then save. Restore your local time zone in **Project Settings** after replacing the manifest.
+Open your existing project from [Apps Script](https://script.google.com/). Replace **Code.gs** with the latest [Code.js](../apps-script/Code.js), replace **WebApp.html** with the latest [web page](../apps-script/WebApp.html) if you use manual browser sync, and replace **appsscript.json** with the latest [manifest](../apps-script/appsscript.json), then save. Restore your local time zone in **Project Settings** after replacing the manifest.
 
 Your Script Properties and trigger stay in the project. Run **previewSync**, review its counts, and then run **syncCanvas**. Approve any newly required permissions. If the project time zone changed, delete the existing sync trigger and run **installDailyTrigger** again.
 
@@ -20,7 +20,7 @@ npm ci
 npm run deploy:apps-script
 ```
 
-Keep `.clasp.json` and `.apps-script-settings.json` at the repository root. The upload command is unchanged by this reorganization. Existing Script Properties and triggers stay in the cloud. Open the printed editor link and run **previewSync** followed by **syncCanvas** to check the update.
+Keep `.clasp.json` and `.apps-script-settings.json` at the repository root. The upload command is unchanged by this reorganization. Existing Script Properties and triggers stay in the cloud. Open the printed editor link and run **previewSync** followed by **syncCanvas** to check the update. If you deployed the manual-sync web app and its page changed, update that deployment to a **New version** under **Deploy → Manage deployments**; its URL remains the same.
 
 If your checkout still follows a development branch that has been merged, switch to `main` before pulling. A fresh clone needs your existing private project-link and time-zone files before uploading, as explained in the [contributor guide](../CONTRIBUTING.md#optional-command-line-cloud-setup).
 

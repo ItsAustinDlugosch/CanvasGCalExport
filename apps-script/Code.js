@@ -295,6 +295,11 @@ function installDailyTrigger() {
   ScriptApp.newTrigger(name).timeBased().atHour(7).everyDays(1).create();
 }
 
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('WebApp')
+    .setTitle('Canvas Assignment Sync');
+}
+
 function previewCanvasFeed() {
   const config = readConfig();
   const result = readAssignments(fetchIcs(config.icalUrl), config);
@@ -340,7 +345,7 @@ function previewSync() {
 
 function syncCanvas() {
   const lock = LockService.getScriptLock();
-  if (!lock.tryLock(0)) return;
+  if (!lock.tryLock(0)) return { skipped: true, reason: 'A sync is already running.' };
   try {
     const config = readConfig();
     // Read and validate the feed before making any Google changes.
@@ -417,6 +422,7 @@ function syncCanvas() {
       }
     }
     console.log(JSON.stringify(counts));
+    return counts;
   } finally {
     lock.releaseLock();
   }

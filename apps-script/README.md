@@ -14,6 +14,7 @@ In Canvas, open **Calendar**, select **Calendar Feed**, and copy the URL. Keep i
 2. Click **New project** and name it **Canvas Export**.
 3. Open this project's [Code.js](Code.js) file in another tab. On GitHub, use **Copy raw file** (or open **Raw** and copy all the text).
 4. Return to Apps Script. Replace everything in the existing **Code.gs** file with that text, then save. Keep the name `Code.gs`.
+5. Next to **Files**, click **+ → HTML**, name the file `WebApp`, and replace its contents with this project's [WebApp.html](WebApp.html). Save it. This file provides the optional browser button described below.
 
 ## 3. Add the project settings
 
@@ -55,9 +56,27 @@ The sync runs each morning between roughly 7 and 8 AM in the project's time zone
 
 Check off an assignment in **Google Tasks** when you finish it. At the next sync, its calendar event moves to **Canvas Completed**. Reopen the Task to move it back. Use Tasks to mark completion; moving a calendar event alone can be undone by the next sync.
 
-To sync sooner, run **syncCanvas** in the editor. To stop automatic updates, delete its trigger on the **Triggers** page; your existing calendars and Tasks remain.
+To sync sooner, run **syncCanvas** in the editor or set up the browser button below. To stop automatic updates, delete its trigger on the **Triggers** page; your existing calendars and Tasks remain.
 
 Assignments removed from the Canvas feed are also removed from the synced calendars and Tasks list, including completed work. Canvas controls which assignments are included in the feed.
+
+## Add a “Run sync now” browser button
+
+Apps Script can publish a private web page with a **Run sync now** button. The page uses your Google sign-in, calls the same `syncCanvas` function, and displays the resulting event and Task counts. Your Canvas feed URL stays in Script Properties and is never sent to a browser extension.
+
+1. In the Apps Script editor, select **Deploy → New deployment**.
+2. Next to **Select type**, click the gear and choose **Web app**.
+3. Enter `Manual Canvas sync` as the description.
+4. Set **Execute as** to **Me**.
+5. Set **Who has access** to **Only myself**. If a managed school account does not offer that choice, use the narrowest option that includes your account.
+6. Click **Deploy**, approve access if asked, and copy the web app URL ending in `/exec`.
+7. Open that URL while signed into the same Google account. Bookmark it and optionally pin the bookmark to your browser toolbar.
+
+Open the bookmark and press **Run sync now** whenever you want an immediate update. Keep the page open until it shows **Sync complete**. The daily trigger remains active as a fallback.
+
+A browser extension is possible, but for this design it would only open the same bookmarked URL. Installing an unpacked extension requires browser developer mode and a per-user URL setting, so the bookmark gives the same secure workflow with fewer steps and no extension permissions.
+
+When `Code.js` or `WebApp.html` changes later, upload both files, then open **Deploy → Manage deployments**, edit the web app, select **New version**, and deploy. Its `/exec` URL remains the same.
 
 ## If something goes wrong
 

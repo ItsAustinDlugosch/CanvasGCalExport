@@ -1,4 +1,5 @@
 # Only these two files belong in the cloud project. Paths are relative to rootDir.
 **/**
 !Code.js
+!WebApp.html
 !appsscript.json

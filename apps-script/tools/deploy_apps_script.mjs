@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const manifestPath = join(root, 'apps-script', 'appsscript.json');
 const codePath = join(root, 'apps-script', 'Code.js');
+const webAppPath = join(root, 'apps-script', 'WebApp.html');
 const claspPath = join(root, '.clasp.json');
 const settingsPath = join(root, '.apps-script-settings.json');
 const claspEntry = join(root, 'node_modules', '@google', 'clasp', 'build', 'src', 'index.js');
@@ -24,6 +25,7 @@ function clasp(...args) {
 
 const originalManifest = readFileSync(manifestPath, 'utf8');
 const originalCode = readFileSync(codePath, 'utf8');
+const originalWebApp = readFileSync(webAppPath, 'utf8');
 const manifest = JSON.parse(originalManifest);
 let settings;
 if (existsSync(settingsPath)) {
@@ -45,6 +47,7 @@ try {
     } finally {
       writeFileSync(manifestPath, originalManifest);
       writeFileSync(codePath, originalCode);
+      writeFileSync(webAppPath, originalWebApp);
     }
   }
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
@@ -52,6 +55,7 @@ try {
 } finally {
   writeFileSync(manifestPath, originalManifest);
   writeFileSync(codePath, originalCode);
+  writeFileSync(webAppPath, originalWebApp);
 }
 
 const { scriptId } = JSON.parse(readFileSync(claspPath, 'utf8'));

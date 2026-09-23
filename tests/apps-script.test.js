@@ -5,6 +5,7 @@ const vm = require('node:vm');
 const test = require('node:test');
 
 const source = fs.readFileSync(path.join(__dirname, '../apps-script/Code.js'), 'utf8');
+const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '../apps-script/appsscript.json'), 'utf8'));
 
 function contextWith(overrides = {}) {
   const context = vm.createContext({
@@ -58,6 +59,10 @@ const fixture = [
   'END:VCALENDAR',
 ].join('\r\n');
 
+test('web app deployment is restricted to the script owner', () => {
+  assert.deepEqual(manifest.webapp, { access: 'MYSELF', executeAs: 'USER_DEPLOYING' });
+});
+
 test('parses Canvas titles, folded ICS lines, dates, and excluded course keys', () => {
   const app = contextWith();
   const config = { excludedCourses: new Set(['CSCE-221']), timeZone: 'America/Chicago' };
@@ -101,6 +106,16 @@ test('a failed Canvas fetch stops before any Google changes', () => {
   });
   assert.throws(() => app.syncCanvas(), /HTTP 503/);
   assert.equal(calendarCalled, false);
+});
+
+test('web app serves the manual sync page', () => {
+  const page = { setTitle(title) { this.title = title; return this; } };
+  const app = contextWith({ HtmlService: { createHtmlOutputFromFile: name => {
+    assert.equal(name, 'WebApp');
+    return page;
+  } } });
+  assert.equal(app.doGet(), page);
+  assert.equal(page.title, 'Canvas Assignment Sync');
 });
 
 test('preview reports changes without creating calendars or Tasks', () => {
@@ -162,7 +177,8 @@ test('first sync preserves completed events and creates matching completed Tasks
       },
     },
   });
-  app.syncCanvas();
+  const result = app.syncCanvas();
+  assert.equal(result.createdTasks, 3);
   assert.ok(operations.some(op => op[0] === 'task.insert' && op[2] === 'CSCE-421 - HW1' && op[3] === 'completed'));
   assert.ok(operations.some(op => op[0] === 'task.patch' && op[3] === 'completed'));
   assert.ok(operations.some(op => op[0] === 'event.patch' && op[1] === 'completed'));
